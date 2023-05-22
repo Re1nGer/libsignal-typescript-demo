@@ -26,5 +26,4 @@ export function isSendWebSocketMessage(wsm: WebSocketMessage): wsm is SendWebSoc
 export interface NetworkParams {
     apiURL: string
     wssURI: string
-    apiKey: string
 }

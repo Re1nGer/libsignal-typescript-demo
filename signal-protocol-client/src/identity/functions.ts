@@ -1,22 +1,24 @@
-import { initializeSignalWebsocket } from '@app/messages/api'
+import { initializeSignalRWebsocket } from '@app/messages/api'
 import { networkInfoSubject } from '@app/network/state'
-import { subscribeWebsocket } from '@app/network/websocket'
 import { KeyHelper, PreKeyType, SignedPublicPreKeyType } from '@privacyresearch/libsignal-protocol-typescript'
 import { SignalDirectory } from '../signal/signal-directory'
 import { directorySubject, signalStore, usernameSubject } from './state'
 
-export async function createIdentity(username: string, url: string, wss: string, apiKey: string): Promise<void> {
-    const directory = new SignalDirectory(url, apiKey)
+export async function createIdentity(username: string, url: string, wss: string): Promise<void> {
+    const directory = new SignalDirectory(url)
     directorySubject.next(directory)
     usernameSubject.next(username)
-    networkInfoSubject.next({ apiURL: url, apiKey, wssURI: wss })
+    networkInfoSubject.next({ apiURL: url, wssURI: wss })
 
-    initializeSignalWebsocket(wss)
-    subscribeWebsocket(username)
+    //initializeSignalWebsocket(wss)
+    initializeSignalRWebsocket();
+    //subscribeWebsocket("test");
+    
 
     const registrationId = KeyHelper.generateRegistrationId()
     // Store registrationId somewhere durable and safe... Or do this.
     signalStore.put(`registrationID`, registrationId)
+    //console.log(signalStore.get("registrationID", "")?.toString());
 
     const identityKeyPair = await KeyHelper.generateIdentityKeyPair()
     // Store identityKeyPair somewhere durable and safe... Or do this.

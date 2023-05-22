@@ -1,3 +1,4 @@
+import { peerId } from '@app/identity/state'
 import { SignedPublicPreKeyType, DeviceType, PreKeyType } from '@privacyresearch/libsignal-protocol-typescript'
 import * as base64 from 'base64-js'
 
@@ -40,33 +41,30 @@ interface SerializedFullDirectoryEntry {
 }
 
 export class SignalDirectory {
-    constructor(private _url: string, private _apiKey: string) {}
+    constructor(private _url: string) {}
 
     async storeKeyBundle(address: string, bundle: FullDirectoryEntry): Promise<void> {
-        const res = await fetch(`${this._url}/keys/${address}`, {
+        await fetch(`${this._url}/keys/${address}`, {
             method: 'PUT',
-            headers: { 'x-api-key': this._apiKey },
             body: JSON.stringify(serializeKeyRegistrationBundle(bundle)),
         })
-        await res.json()
     }
 
     async getPreKeyBundle(address: string): Promise<DeviceType | undefined> {
-        const res = await fetch(`${this._url}/keys/${address}`, { headers: { 'x-api-key': this._apiKey } })
+        const res = await fetch(`${this._url}/keys/${address}`)
         const bundle = await res.json()
         if (!bundle) {
             return undefined
         }
-        const { identityKey, signedPreKey, registrationId, preKey } = bundle
+        const { identityKey, signedPreKey, registrationId, oneTimePreKeys, id } = bundle
+        const preKey = oneTimePreKeys[0];
+        console.log('bundle', bundle);
+        peerId.next(id);
         return deserializeKeyBundle({ identityKey, signedPreKey, preKey, registrationId })
     }
 
     get url(): string {
         return this._url
-    }
-
-    get apiKey(): string {
-        return this._apiKey
     }
 }
 
@@ -123,6 +121,8 @@ export function deserializeKeyBundle(kb: PublicPreKeyBundle): DeviceType {
         keyId: kb.preKey.keyId,
         publicKey: base64.toByteArray(kb.preKey.publicKey),
     }
+
+    console.log('preKey', preKey);
 
     return {
         identityKey,

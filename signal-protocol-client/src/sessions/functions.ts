@@ -1,5 +1,5 @@
 import { directorySubject, signalStore, usernameSubject } from '@app/identity/state'
-import { sendSignalProtocolMessage } from '@app/messages/api'
+import { sendSignalProtocolMessageHub } from '@app/messages/api'
 import { ProcessedChatMessage } from '@app/messages/types'
 import { SessionBuilder, SessionCipher, SignalProtocolAddress } from '@privacyresearch/libsignal-protocol-typescript'
 import { currentSessionSubject, sessionForRemoteUser, sessionListSubject } from './state'
@@ -17,6 +17,7 @@ export async function startSession(recipient: string): Promise<void> {
     // Process a prekey fetched from the server. Returns a promise that resolves
     // once a session is created and saved in the store, or rejects if the
     // identityKey differs from a previously seen identity for this address.
+    console.log(keyBundle);
     const session = await sessionBuilder.processPreKey(keyBundle!)
     console.log({ session, keyBundle })
 
@@ -24,7 +25,8 @@ export async function startSession(recipient: string): Promise<void> {
     const sessionCipher = new SessionCipher(signalStore, recipientAddress)
     const ciphertext = await sessionCipher.encrypt(Uint8Array.from([0, 0, 0, 0]).buffer)
 
-    sendSignalProtocolMessage(recipient, usernameSubject.value, ciphertext)
+    //sendSignalProtocolMessage(recipient, usernameSubject.value, ciphertext)
+    await sendSignalProtocolMessageHub(recipient, usernameSubject.value, ciphertext);
 
     const newSession: ChatSession = {
         remoteUsername: recipient,

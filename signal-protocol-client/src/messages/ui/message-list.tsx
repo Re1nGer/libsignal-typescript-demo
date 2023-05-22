@@ -1,6 +1,4 @@
-import React from 'react'
 import { ProcessedChatMessage } from '../types'
-
 import MessageView from './message-view'
 
 export interface MessageListProps {
@@ -9,6 +7,7 @@ export interface MessageListProps {
 }
 
 export default function MessageList(props: MessageListProps): JSX.Element {
+
     return (
         <div>
             {props.messages.map((m) => (

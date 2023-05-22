@@ -1,15 +1,14 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 import { createIdentity } from '../functions'
 
 export default function CreateIdentity(): JSX.Element {
     const [username, setUsername] = useState('')
-    const [url, setUrl] = useState('https://x94jzhh4el.execute-api.us-west-2.amazonaws.com/temp')
-    const [wss, setWss] = useState('wss://56f7nk7zkg.execute-api.us-west-2.amazonaws.com/temp')
-    const [apiKey, setApiKey] = useState('')
+    const [url, setUrl] = useState('http://localhost:5259/temp')
+    const [wss, setWss] = useState('ws://localhost:5259/chat')
 
     const createID = async () => {
-        await createIdentity(username, url, wss, apiKey)
+        await createIdentity(username, url, wss)
     }
 
     return (
@@ -53,20 +52,6 @@ export default function CreateIdentity(): JSX.Element {
                     value={wss}
                     onChange={(event) => {
                         setWss(event.target.value)
-                    }}
-                />
-            </div>
-            <div className="inputitem">
-                <label htmlFor="apikey" className="label">
-                    API Key:
-                </label>
-                <input
-                    type="text"
-                    name="apikey"
-                    id="apikey"
-                    value={apiKey}
-                    onChange={(event) => {
-                        setApiKey(event.target.value)
                     }}
                 />
             </div>

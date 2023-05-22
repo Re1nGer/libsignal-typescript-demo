@@ -5,7 +5,7 @@ import { startSession } from '@app/sessions/functions'
 export default function AddSession(): JSX.Element {
     const [remoteUsername, setRemoteUsername] = useState('')
 
-    const createSession = () => {
+    const createSession = async () => {
         startSession(remoteUsername)
         currentSessionSubject.next(sessionForRemoteUser(remoteUsername) || null)
         setRemoteUsername('')

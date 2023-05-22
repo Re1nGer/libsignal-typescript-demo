@@ -5,7 +5,7 @@ import { addMessageToSession } from '@app/sessions/functions'
 import { sessionForRemoteUser, sessionListSubject } from '@app/sessions/state'
 import { ChatSession } from '@app/sessions/types'
 import { MessageType, SessionCipher, SignalProtocolAddress } from '@privacyresearch/libsignal-protocol-typescript'
-import { sendSignalProtocolMessage } from './api'
+import { sendSignalProtocolMessageHub } from './api'
 import { ProcessedChatMessage } from './types'
 
 export async function processPreKeyMessage(address: string, message: MessageType): Promise<void> {
@@ -30,15 +30,17 @@ export async function processPreKeyMessage(address: string, message: MessageType
         cm = JSON.parse(plaintext) as ProcessedChatMessage
 
         addMessageToSession(address, cm)
+        console.log('Decrypted PreKeyMessage', plaintext);
     } catch (e) {
         console.log('PreKey message does not contain JSON')
     }
 }
 
 export async function processRegularMessage(address: string, message: MessageType): Promise<void> {
-    console.log('processRegularMessage')
+    console.log('processRegularMessage', message.body);
     const cipher = new SessionCipher(signalStore, new SignalProtocolAddress(address, 1))
-    const plaintextBytes = await cipher.decryptWhisperMessage(message.body!, 'binary')
+    
+     const plaintextBytes = await cipher.decryptWhisperMessage(message.body!, 'binary')
     const plaintext = new TextDecoder().decode(new Uint8Array(plaintextBytes))
 
     const cm: ProcessedChatMessage = JSON.parse(plaintext)
@@ -59,5 +61,6 @@ export async function encryptAndSendMessage(to: string, message: string): Promis
     }
     addMessageToSession(to, cm)
     const signalMessage = await cipher.encrypt(new TextEncoder().encode(JSON.stringify(cm)).buffer)
-    sendSignalProtocolMessage(to, usernameSubject.value, signalMessage)
+    //sendSignalProtocolMessage(to, usernameSubject.value, signalMessage)
+    await sendSignalProtocolMessageHub(to, usernameSubject.value, signalMessage);
 }

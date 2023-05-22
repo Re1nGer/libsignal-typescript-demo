@@ -1,10 +1,10 @@
 import { MessageType } from '@privacyresearch/libsignal-protocol-typescript'
 import { Subscription } from 'rxjs'
 import { webSocket } from 'rxjs/webSocket'
-import { setSignalWebsocket, setWebsocketSubscription, signalWebsocket } from '@app/network/websocket'
-
+import { setSignalRWebsocket, setSignalWebsocket, setWebsocketSubscription, signalWebsocket, socketHub } from '@app/network/websocket'
 import { processPreKeyMessage, processRegularMessage } from '@app/messages/functions'
 import { isSendWebSocketMessage, SendWebSocketMessage, WebSocketMessage } from '@app/network/types'
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
 
 export function sendSignalProtocolMessage(to: string, from: string, message: MessageType): void {
     const wsm: SendWebSocketMessage = {
@@ -15,6 +15,44 @@ export function sendSignalProtocolMessage(to: string, from: string, message: Mes
     }
     console.log('sending message to websocket', {wsm})
     signalWebsocket.next(wsm)
+}
+
+export async function sendSignalProtocolMessageHub(to: string, from: string, message: MessageType) {
+    const wsm: SendWebSocketMessage = {
+        action: 'sendMessage',
+        address: to,
+        from,
+        message: JSON.stringify(message),
+    }
+    console.log('sending message to signal hub', { wsm });
+    await socketHub.send("sendMessage", JSON.stringify(wsm), from);
+}
+
+export function initializeSignalRWebsocket(): HubConnection {
+    console.log('initializing signalR');
+    let connection = new HubConnectionBuilder()
+    .withUrl("http://localhost:5259/chat")
+    .withAutomaticReconnect()
+    .build();
+
+    connection.start().then(() => {
+        setSignalRWebsocket(connection);
+
+        connection.on("ReceiveMessage", msg => {
+            const message = JSON.parse(msg);
+            console.log('received message from hub', { message, msg });
+            if (isSendWebSocketMessage(message)) {
+                processWebsocketMessage(message).catch((e) => {
+                    console.warn(`error accepting signal message`, { e })
+                })
+            } else {
+                console.error('Message on wss is not recognized', {msg})
+            }
+
+        });
+    })
+
+    return connection;
 }
 
 export function initializeSignalWebsocket(uri: string): Subscription {
